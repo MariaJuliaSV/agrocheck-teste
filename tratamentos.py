@@ -1,3 +1,20 @@
+# =====================================================================
+#  [PASSO 8] TRATAMENTOS.PY — textos de manejo de cada classe
+# =====================================================================
+#  Este arquivo NÃO tem inteligência artificial: é só um "dicionário"
+#  (TRATAMENTOS) com as informações que aparecem no cartão de
+#  "Possíveis tratamentos e manejo" do site.
+#
+#  Como ele se conecta com o app.py:
+#    1. O modelo responde com um número (ex.: 5).
+#    2. O app.py usa a lista "classes" para traduzir 5 -> "Batata - Requeima".
+#    3. Esse nome é a CHAVE usada aqui: TRATAMENTOS["Batata - Requeima"].
+#  Por isso, os nomes abaixo precisam ser IGUAIS aos da lista "classes".
+#
+#  Separar os textos num arquivo próprio deixa o app.py mais limpo e
+#  permite mudar um texto sem mexer na lógica do site.
+# =====================================================================
+
 """
 Informações de manejo para cada classe reconhecida pelo AgroCheck.
 

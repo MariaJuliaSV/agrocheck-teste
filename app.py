@@ -2,6 +2,7 @@ import os
 import unicodedata
 
 import streamlit as st
+import streamlit.components.v1 as components
 import tensorflow as tf
 import numpy as np
 from PIL import Image
@@ -11,11 +12,15 @@ from tratamentos import TRATAMENTOS
 # -----------------------------------------
 # LOGIN DE DEMONSTRAÇÃO
 # -----------------------------------------
-# Usuário e senha fixos, só para a apresentação do trabalho.
-# Para trocar, basta mudar os valores abaixo.
+# Usuários e senhas fixos, só para a apresentação do trabalho.
+# Para adicionar, remover ou trocar, basta mudar o dicionário abaixo
+# (à esquerda o nome, como aparece no "Olá", à direita a senha).
 
-USUARIO_DEMO = "Maria Julia"
-SENHA_DEMO = "12345"
+USUARIOS_DEMO = {
+    "Maria Julia": "12345",
+    "Nathalia": "12345",
+    "Isadora": "12345",
+}
 
 # -----------------------------------------
 # CONFIGURAÇÕES
@@ -584,6 +589,50 @@ def sair():
     """Faz logout e limpa tudo da sessão (imagem, resultado e uploader)."""
     limpar_imagem()
     st.session_state.logado = False
+    st.session_state.pop("usuario_nome", None)
+
+
+def conferir_login(usuario_digitado, senha_digitada):
+    """Devolve o nome do usuário se o login estiver certo, ou None se não."""
+    for nome, senha_certa in USUARIOS_DEMO.items():
+        if normalizar(usuario_digitado) == normalizar(nome) and senha_digitada == senha_certa:
+            return nome
+    return None
+
+
+# Enter no campo "Usuário" passa para o campo "Senha" (em vez de tentar entrar).
+# O código fica preso só no campo Usuário e só reage à tecla Enter.
+# Se algo der errado, ele não faz nada (o login continua funcionando normal).
+SCRIPT_ENTER_PROXIMO_CAMPO = """
+<script>
+(function () {
+    try {
+        const doc = window.parent.document;
+        function ligar(tentativas) {
+            const usuario = doc.querySelector('input[aria-label="Usuário"]');
+            const senha = doc.querySelector('input[aria-label="Senha"]');
+            if (!usuario || !senha) {
+                if (tentativas > 0) { setTimeout(function () { ligar(tentativas - 1); }, 200); }
+                return;
+            }
+            usuario.setAttribute("enterkeyhint", "next");
+            if (usuario.dataset.agroEnter === "1") { return; }
+            usuario.dataset.agroEnter = "1";
+            usuario.addEventListener("keydown", function (evento) {
+                if (evento.key === "Enter" && !evento.isComposing) {
+                    evento.preventDefault();
+                    evento.stopPropagation();
+                    senha.focus();
+                }
+            });
+        }
+        ligar(25);
+    } catch (erro) {
+        console.log("AgroCheck (Enter -> Senha):", erro);
+    }
+})();
+</script>
+"""
 
 
 if not st.session_state.get("logado", False):
@@ -613,13 +662,17 @@ if not st.session_state.get("logado", False):
             )
 
         if entrar:
-            if normalizar(usuario) == normalizar(USUARIO_DEMO) and senha == SENHA_DEMO:
+            nome_logado = conferir_login(usuario, senha)
+            if nome_logado:
                 st.session_state.logado = True
+                st.session_state.usuario_nome = nome_logado
                 st.rerun()
             else:
                 st.error("Usuário ou senha incorretos. Tente novamente.", icon="🔒")
 
         html('<div class="login-dica">Acesso de demonstração do projeto AgroCheck.</div>')
+
+    components.html(SCRIPT_ENTER_PROXIMO_CAMPO, height=0)
 
     # Enquanto não houver login, nada abaixo é executado (nem o modelo é carregado)
     st.stop()
@@ -633,7 +686,7 @@ with st.container(
     vertical_alignment="center"
 ):
     st.markdown(
-        f'<div class="saudacao">👋 Olá, <strong>{USUARIO_DEMO}</strong></div>',
+        f'<div class="saudacao">👋 Olá, <strong>{st.session_state.get("usuario_nome", "")}</strong></div>',
         unsafe_allow_html=True,
         width="content"
     )
